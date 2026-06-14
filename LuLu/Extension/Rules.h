@@ -51,7 +51,7 @@
 -(BOOL)add:(Rule*)rule save:(BOOL)save;
 
 //find (matching) rule
--(Rule*)find:(Process*)process flow:(NEFilterSocketFlow*)flow csChange:(BOOL*)csChange;
+-(Rule*)find:(Process*)process flow:(NEFilterSocketFlow*)flow;
 
 //disable (or re-enable)
 -(BOOL)toggleRule:(NSString*)key rule:(NSString*)uuid state:(NSNumber*)state;
@@ -64,10 +64,6 @@
 
 //import rules
 -(BOOL)import:(NSData*)rules userOnly:(BOOL)userOnly;
-
-//update an item's cs info
-// and also the cs info of all its rule
--(void)updateCSInfo:(Process*)process;
 
 //number of rules for a given key
 -(NSUInteger)ruleCountForKey:(NSString*)key;

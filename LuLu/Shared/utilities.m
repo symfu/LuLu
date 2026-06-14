@@ -1568,26 +1568,26 @@ BOOL isSimulatorApp(NSString* path)
     
     //dbg msg
     os_log_debug(logHandle, "checking if %{public}@ is a simulator application", path);
-    
+
     //get bundle
     bundle = findAppBundle(path);
     if(nil == bundle) goto bail;
-    
+
     //get supported platforms
     supportedPlatforms = bundle.infoDictionary[@"CFBundleSupportedPlatforms"];
     if(YES != [supportedPlatforms isKindOfClass:[NSArray class]]) goto bail;
-    
+
     //dbg msg
     os_log_debug(logHandle, "supported platforms: %{public}@", supportedPlatforms);
-    
+
     //sanity check
     if(0 == supportedPlatforms.count) goto bail;
-    
+
     //check if simulator app
     simulatorApp = [[NSSet setWithArray: supportedPlatforms] isSubsetOfSet: [NSSet setWithArray: @[@"iPhoneSimulator", @"AppleTVSimulator"]]];
-    
+
 bail:
-    
+
     return simulatorApp;
 }
 
@@ -1764,16 +1764,25 @@ BOOL matchesCSInfo(NSDictionary* csInfo_1, NSDictionary* csInfo_2)
     }
     
     //check 0x4
-    // signing auths mismatch?
-    // note: skip for Apple / App Store binaries
+    // (leaf) signing authority mismatch?
+    // note: skip for Apple / App Store binaries -- their cert chain is Apple-controlled (not a
+    //       per-developer identity) and Apple renames it (e.g. macOS 28: "Software Signing" ->
+    //       "macOS Software Signing"), which is not a real identity change.
     if( (Apple != signer_1) && (AppStore != signer_1) &&
         (Apple != signer_2) && (AppStore != signer_2) )
     {
-        if( ((nil != signingAuths_1) || (nil != signingAuths_2)) &&
-            (YES != [signingAuths_1 isEqualToArray:signingAuths_2]) )
+        //compare ONLY the leaf authority (auths[0]) -- the per-developer identity
+        // e.g. "Developer ID Application: Company (TEAMID)". the intermediate/root are
+        // Apple-controlled & constant, so comparing them adds no identity signal and is fragile
+        // (an Apple rename there would falsely flag a cs change, like the platform-leaf rename).
+        NSString* leaf_1 = signingAuths_1.firstObject;
+        NSString* leaf_2 = signingAuths_2.firstObject;
+
+        if( ((nil != leaf_1) || (nil != leaf_2)) &&
+            (YES != [leaf_1 isEqualToString:leaf_2]) )
         {
             //err msg
-            os_log_error(logHandle, "ERROR: code signing mismatch (signing auths): %{public}@ / %{public}@", csInfo_1, csInfo_2);
+            os_log_error(logHandle, "ERROR: code signing mismatch (leaf authority): %{public}@ / %{public}@", csInfo_1, csInfo_2);
 
             //bail
             goto bail;

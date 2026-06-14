@@ -293,9 +293,6 @@ bail:
     //process obj
     Process* process = nil;
     
-    //flag
-    BOOL csChange = NO;
-    
     //matching rule obj
     Rule* matchingRule = nil;
     
@@ -474,7 +471,7 @@ bail:
     // check for existing rule
     
     //existing rule for process?
-    matchingRule = [rules find:process flow:(NEFilterSocketFlow*)flow csChange:&csChange];
+    matchingRule = [rules find:process flow:(NEFilterSocketFlow*)flow];
     if(nil != matchingRule)
     {
         //dbg msg
@@ -511,24 +508,9 @@ bail:
     }
 
     /* NO MATCHING RULE FOUND */
-    
-    //cs change?
-    // update item's rules with new code signing info
-    // note: user will be informed about this, if/when alert is delivered
-    if(YES == csChange)
-    {
-        //dbg msg
-        os_log_debug(logHandle, "found rule set for %d/%{public}@: %{public}@, but code signing info has changed", process.pid, process.binary.name, matchingRule);
-        
-        //update cs info
-        [rules updateCSInfo:process];
-    }
-    //no matching rule found?
-    else
-    {
-        //dbg msg
-        os_log_debug(logHandle, "no (saved) rule found for %d/%{public}@", process.pid, process.binary.name);
-    }
+
+    //dbg msg
+    os_log_debug(logHandle, "no (saved) rule found for %d/%{public}@", process.pid, process.binary.name);
 
     //CHECK:
     // client in passive mode?
@@ -688,7 +670,7 @@ bail:
                 verdict = kFlowVerdictPause;
                 
                 //create/deliver alert
-                [self alert:(NEFilterSocketFlow*)flow process:process csChange:csChange];
+                [self alert:(NEFilterSocketFlow*)flow process:process];
             }
             //other rules for this process?
             else if(0 != [rules ruleCountForKey:process.key])
@@ -700,7 +682,7 @@ bail:
                 verdict = kFlowVerdictPause;
                 
                 //create/deliver alert
-                [self alert:(NEFilterSocketFlow*)flow process:process csChange:csChange];
+                [self alert:(NEFilterSocketFlow*)flow process:process];
             }
             //otherwise its a apple binary
             // not on graylist and w/ no other rules, so allow
@@ -752,8 +734,7 @@ bail:
     //'allow installed' check
     // if preference is enabled, item is 3rd-party, internal, and hasn't had its CS changed ...allow!
     if( (YES == [preferences.preferences[PREF_ALLOW_INSTALLED] boolValue]) &&
-        (Apple != [process.csInfo[KEY_CS_SIGNER] intValue]) &&
-        (YES != csChange) )
+        (Apple != [process.csInfo[KEY_CS_SIGNER] intValue]) )
     {
         //only check internal processes
         // so, like ignore ones from DMGs, external drives, etc.
@@ -902,7 +883,7 @@ bail:
         
     //create/deliver alert
     // note: handles response + next/any related flow
-    [self alert:(NEFilterSocketFlow*)flow process:process csChange:csChange];
+    [self alert:(NEFilterSocketFlow*)flow process:process];
     
 bail:
     
@@ -916,20 +897,17 @@ bail:
 
 //1. Create and deliver alert
 //2. Handle response (and process other shown alerts, etc.)
--(void)alert:(NEFilterSocketFlow*)flow process:(Process*)process csChange:(BOOL)csChange
+-(void)alert:(NEFilterSocketFlow*)flow process:(Process*)process
 {
     //alert
     NSMutableDictionary* alert = nil;
-    
+
     //rule
     __block Rule* rule = nil;
-    
+
     //create alert
     alert = [alerts create:(NEFilterSocketFlow*)flow process:process];
-    
-    //add cs change
-    alert[KEY_CS_CHANGE] = [NSNumber numberWithBool:csChange];
-    
+
     //dbg msg
     os_log_debug(logHandle, "created alert...");
 

@@ -85,30 +85,6 @@ extern NSMutableDictionary* alerts;
             if(nil == [NSApp modalWindow])
                 [alertWindow.window setLevel:NSPopUpMenuWindowLevel];
             
-            //code sign change?
-            // show code signing popover
-            if(YES == [alert[KEY_CS_CHANGE] boolValue])
-            {
-                //dbg msg
-                os_log_debug(logHandle, "code signing information changed, will show (modal) alert to user");
-            
-                //invoke handler to open
-                [alertWindow openSigningInfoPopover];
-                
-                //show (modal) alert
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                    
-                    //lower window level (so alert can show above)
-                    [alertWindow.window setLevel:NSNormalWindowLevel];
-                    
-                    //alert
-                    showAlert(NSAlertStyleInformational, [NSString stringWithFormat:NSLocalizedString(@"%@'s code signing information has changed", @"%@'s code signing information has changed"), alert[KEY_PROCESS_NAME]], @"", @[NSLocalizedString(@"OK", @"OK")]);
-                    
-                    //(re)set window level
-                    [alertWindow.window setLevel:NSPopUpMenuWindowLevel];
-                    
-                });
-            }
         });
     });
     

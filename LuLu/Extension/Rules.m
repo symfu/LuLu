@@ -620,30 +620,6 @@ bail:
     return added;
 }
 
-//update an item's cs info
-// and also the cs info of all its rule
--(void)updateCSInfo:(Process*)process
-{
-    //dbg msg
-    os_log_debug(logHandle, "updating code signing information for %{public}@ and its rules", process);
-    
-    //sync
-    @synchronized(self)
-    {
-        //update item's cs info
-        self.rules[process.key][KEY_CS_INFO] = process.csInfo;
-        
-        //update also the cs info of all its rule
-        for(Rule* rule in self.rules[process.key][KEY_RULES])
-        {
-            //update
-            rule.csInfo = process.csInfo;
-        }
-    }
-
-    return;
-}
-
 //number of rules for a given key
 -(NSUInteger)ruleCountForKey:(NSString*)key
 {
@@ -667,11 +643,8 @@ bail:
 }
 
 //find (matching) rule
--(Rule*)find:(Process*)process flow:(NEFilterSocketFlow*)flow csChange:(BOOL*)csChange
+-(Rule*)find:(Process*)process flow:(NEFilterSocketFlow*)flow
 {
-    //rule's cs info
-    NSDictionary* csInfo = nil;
-    
     //matching rule
     Rule* matchingRule = nil;
     
@@ -713,29 +686,7 @@ bail:
     {
         //item rules
         itemRules = self.rules[process.key][KEY_RULES];
-        
-        //extract cs info
-        csInfo = self.rules[process.key][KEY_CS_INFO];
-            
-        //cs info?
-        // make sure it (still) matches
-        if(nil != csInfo)
-        {
-            //mismatch?
-            // ignore...
-            if(YES != matchesCSInfo(process.csInfo, csInfo))
-            {
-                //set
-                *csChange = YES;
-                
-                //err msg
-                os_log_error(logHandle, "ERROR: code signing mismatch: %{public}@ / %{public}@", process.csInfo, csInfo);
-                
-                //bail
-                goto bail;
-            }
-        }
-       
+
         //grab global rules
         globalRules = self.rules[VALUE_ANY][KEY_RULES];
         

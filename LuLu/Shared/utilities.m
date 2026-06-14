@@ -1765,14 +1765,19 @@ BOOL matchesCSInfo(NSDictionary* csInfo_1, NSDictionary* csInfo_2)
     
     //check 0x4
     // signing auths mismatch?
-    if( ((nil != signingAuths_1) || (nil != signingAuths_2)) &&
-        (YES != [signingAuths_1 isEqualToArray:signingAuths_2]) )
+    // note: skip for Apple / App Store binaries
+    if( (Apple != signer_1) && (AppStore != signer_1) &&
+        (Apple != signer_2) && (AppStore != signer_2) )
     {
-        //err msg
-        os_log_error(logHandle, "ERROR: code signing mismatch (signing auths): %{public}@ / %{public}@", csInfo_1, csInfo_2);
-        
-        //bail
-        goto bail;
+        if( ((nil != signingAuths_1) || (nil != signingAuths_2)) &&
+            (YES != [signingAuths_1 isEqualToArray:signingAuths_2]) )
+        {
+            //err msg
+            os_log_error(logHandle, "ERROR: code signing mismatch (signing auths): %{public}@ / %{public}@", csInfo_1, csInfo_2);
+
+            //bail
+            goto bail;
+        }
     }
     
     //happy

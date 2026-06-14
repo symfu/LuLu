@@ -1025,15 +1025,13 @@ bail:
     @synchronized(self.relatedFlows)
     {
         //first time
-        // init array for item (process) alerts
+        // init (ordered) set for item (process) flows
         if(!self.relatedFlows[key]) {
-            self.relatedFlows[key] = [NSMutableArray array];
+            self.relatedFlows[key] = [NSMutableOrderedSet orderedSet];
         }
-        
-        //only add if new
-        if(![self.relatedFlows[key] containsObject:flow]) {
-            [self.relatedFlows[key] addObject:flow];
-        }
+
+        //add
+        [self.relatedFlows[key] addObject:flow];
     }
 
     return;
@@ -1052,7 +1050,7 @@ bail:
         //dequeue one flow
         @synchronized(self.relatedFlows) {
             
-            NSMutableArray* queue = self.relatedFlows[key];
+            NSMutableOrderedSet* queue = self.relatedFlows[key];
             
             //done?
             if(!queue.count) {

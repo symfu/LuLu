@@ -109,21 +109,21 @@ int main(int argc, char *argv[])
     }
     
     //allow list?
-    if(0 != preferences.preferences[PREF_USE_ALLOW_LIST])
+    if(YES == [preferences.preferences[PREF_USE_ALLOW_LIST] boolValue])
     {
         //dbg msg
         os_log_debug(logHandle, "init'ing allowing list");
-        
+
         //alloc/init/load allow list
         allowList = [[BlockOrAllowList alloc] init:preferences.preferences[PREF_ALLOW_LIST]];
     }
-        
+
     //block list?
-    if(0 != preferences.preferences[PREF_USE_BLOCK_LIST])
+    if(YES == [preferences.preferences[PREF_USE_BLOCK_LIST] boolValue])
     {
         //dbg msg
         os_log_debug(logHandle, "init'ing block list");
-        
+
         //alloc/init/load block list
         blockList = [[BlockOrAllowList alloc] init:preferences.preferences[PREF_BLOCK_LIST]];
     }
